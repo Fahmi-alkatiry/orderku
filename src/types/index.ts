@@ -1,4 +1,11 @@
+export interface Addon {
+  name: string;
+  price: number;
+}
+
+
 // Tipe Data Produk (Menu)
+
 export interface Product {
   id: number;
   name: string;
@@ -8,12 +15,15 @@ export interface Product {
   description?: string;
   isAvailable: boolean;
   restaurantId?: number;
+  addons?: Addon[];
 }
 
 // Tipe Data Item di Keranjang Belanja (Frontend only)
 export interface CartItem {
   product: Product;
   quantity: number;
+  selectedAddons: Addon[]; // Addon yang dipilih user
+  uniqueId?: string; // ID unik untuk membedakan "Indomie Polos" vs "Indomie + Telur"
 }
 
 // Tipe Data Item di dalam Order (Dari Backend)

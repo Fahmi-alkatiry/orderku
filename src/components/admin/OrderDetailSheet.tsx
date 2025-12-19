@@ -1,4 +1,4 @@
-import { CheckCircle, Clock, User, MapPin, Trash2, AlertTriangle } from 'lucide-react'; // Tambah icon
+import { CheckCircle, Clock, User, MapPin, Trash2, AlertTriangle } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Order } from '@/types';
@@ -97,13 +97,30 @@ export const OrderDetailSheet = ({ order, open, onOpenChange, onUpdate }: OrderD
                     className="w-14 h-14 object-cover rounded-lg bg-gray-200"
                   />
                   <div className="flex-1">
-                    <p className="font-medium text-sm text-gray-900">{item.product.name}</p>
-                    <p className="text-gray-500 text-sm">
-                      {item.quantity}x @ {formatRupiah(Number(item.price))}
-                    </p>
-                    <p className="font-semibold text-sm mt-1 text-gray-800">
-                      {formatRupiah(item.subtotal)}
-                    </p>
+                    <div className="flex justify-between items-start">
+                      <p className="font-medium text-sm text-gray-900">{item.product.name}</p>
+                      <p className="text-xs font-bold text-gray-900">x{item.quantity}</p>
+                    </div>
+                    
+                    {/* TAMPILKAN ADDONS DI ADMIN */}
+                    {item.addons && Array.isArray(item.addons) && item.addons.length > 0 && (
+                      <div className="mt-1 mb-1">
+                        {item.addons.map((addon: any, idx: number) => (
+                          <span key={idx} className="inline-block bg-orange-50 text-orange-700 text-[10px] px-1.5 py-0.5 rounded mr-1 border border-orange-100">
+                            + {addon.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-end mt-1">
+                      <p className="text-gray-400 text-xs">
+                        @ {formatRupiah(Number(item.price))} 
+                      </p>
+                      <p className="font-semibold text-sm text-gray-800">
+                        {formatRupiah(Number(item.subtotal))}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))}

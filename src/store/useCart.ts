@@ -1,12 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { CartItem, Product } from '@/types';
+import { CartItem, Product, Addon } from '@/types';
 
 interface CartState {
   items: CartItem[];
-  addToCart: (product: Product) => void;
-  removeFromCart: (productId: number) => void;
-  decreaseQuantity: (productId: number) => void;
+  addToCart: (product: Product, addons?: Addon[]) => void;
+  removeFromCart: (uniqueId: string) => void;
+  decreaseQuantity: (uniqueId: string) => void;
   clearCart: () => void;
   totalPrice: () => number;
 }
@@ -16,50 +16,58 @@ export const useCart = create<CartState>()(
     (set, get) => ({
       items: [],
       
-      addToCart: (product) => set((state) => {
-        // Cek apakah produk sudah ada di keranjang
-        const existing = state.items.find((i) => i.product.id === product.id);
+      addToCart: (product, selectedAddons = []) => set((state) => {
+        // Buat ID unik kombinasi: ProductID + Addons
+        // Contoh: "1-Telur-Keju" vs "1-"
+        const addonString = selectedAddons.map(a => a.name).sort().join('-');
+        const uniqueId = `${product.id}-${addonString}`;
+
+        const existing = state.items.find((i) => i.uniqueId === uniqueId);
         
         if (existing) {
-          // Jika ada, tambahkan quantity-nya saja
           return {
             items: state.items.map((i) =>
-              i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
+              i.uniqueId === uniqueId ? { ...i, quantity: i.quantity + 1 } : i
             ),
           };
         }
-        // Jika belum ada, masukkan sebagai item baru
-        return { items: [...state.items, { product, quantity: 1 }] };
+        
+        return { 
+          items: [...state.items, { 
+            product, 
+            quantity: 1, 
+            selectedAddons, 
+            uniqueId 
+          }] 
+        };
       }),
 
-      decreaseQuantity: (productId) => set((state) => {
-        const existing = state.items.find((i) => i.product.id === productId);
-        
-        // Jika quantity lebih dari 1, kurangi 1
+      decreaseQuantity: (uniqueId) => set((state) => {
+        const existing = state.items.find((i) => i.uniqueId === uniqueId);
         if (existing && existing.quantity > 1) {
              return {
                 items: state.items.map((i) => 
-                    i.product.id === productId ? { ...i, quantity: i.quantity - 1} : i
+                    i.uniqueId === uniqueId ? { ...i, quantity: i.quantity - 1} : i
                 )
              }
         }
-        // Jika sisa 1 dan dikurang, maka hapus item dari keranjang
-        return { items: state.items.filter((i) => i.product.id !== productId) };
+        return { items: state.items.filter((i) => i.uniqueId !== uniqueId) };
       }),
 
-      removeFromCart: (productId) => set((state) => ({
-        items: state.items.filter((i) => i.product.id !== productId),
+      removeFromCart: (uniqueId) => set((state) => ({
+        items: state.items.filter((i) => i.uniqueId !== uniqueId),
       })),
 
       clearCart: () => set({ items: [] }),
 
       totalPrice: () => {
-        // Hitung total harga (pastikan konversi ke Number karena dari backend bisa String/Decimal)
-        return get().items.reduce((total, item) => total + (Number(item.product.price) * item.quantity), 0);
+        return get().items.reduce((total, item) => {
+          const basePrice = Number(item.product.price);
+          const addonsPrice = item.selectedAddons.reduce((sum, a) => sum + Number(a.price), 0);
+          return total + ((basePrice + addonsPrice) * item.quantity);
+        }, 0);
       }
     }),
-    {
-      name: 'cart-storage', // Key untuk penyimpanan di LocalStorage browser
-    }
+    { name: 'cart-storage' }
   )
 );

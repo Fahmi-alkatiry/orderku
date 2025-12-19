@@ -22,6 +22,22 @@ export default function AdminDashboard() {
   const [restaurantId, setRestaurantId] = useState<number>(0);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
+
+  const unlockAudio = async () => {
+  if (!audioRef.current) return;
+
+  try {
+    await audioRef.current.play();
+    audioRef.current.pause();
+    audioRef.current.currentTime = 0;
+    setAudioUnlocked(true);
+    toast.success("Notifikasi suara aktif");
+  } catch (err) {
+    console.log("Unlock audio gagal", err);
+  }
+};
+
 
   // 1. Initial Load
   useEffect(() => {
@@ -102,6 +118,7 @@ export default function AdminDashboard() {
           <Button
             variant="outline"
             size="sm"
+            onClick={unlockAudio}
             className="relative h-10 w-10 p-0 rounded-full border-gray-300"
           >
             <Bell className="w-5 h-5 text-gray-600" />
